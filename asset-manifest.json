@@ -1,14 +1,10 @@
 {
   "files": {
-    "main.js": "/tasks-app/static/js/main.23816442.js",
-    "static/media/background.jpg": "/tasks-app/static/media/background.d038327767f0e42729d9.jpg",
-    "static/media/dragging.png": "/tasks-app/static/media/dragging.274419bc2aac7a97fec5.png",
-    "static/media/title.png": "/tasks-app/static/media/title.e66c5de0bc808388b42a.png",
-    "static/media/undragging.png": "/tasks-app/static/media/undragging.a05ce2fa9d382c59ea4f.png",
-    "index.html": "/tasks-app/index.html",
-    "main.23816442.js.map": "/tasks-app/static/js/main.23816442.js.map"
+    "main.js": "/coin-tracker/static/js/main.057deff1.js",
+    "index.html": "/coin-tracker/index.html",
+    "main.057deff1.js.map": "/coin-tracker/static/js/main.057deff1.js.map"
   },
   "entrypoints": [
-    "static/js/main.23816442.js"
+    "static/js/main.057deff1.js"
   ]
 }
