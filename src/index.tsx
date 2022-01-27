@@ -41,7 +41,6 @@ body{
   font-family: 'Nanum Gothic', sans-serif;
   color: black;
   box-sizing: border-box;
-  background:linear-gradient(135deg,#e09,#d0e);
   line-height: 1.2;
 }
 menu, ol, ul {
