@@ -2,11 +2,13 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { ThemeProvider } from "styled-components";
 import App from "./App";
-import { darkTheme } from "./Theme";
+import { theme } from "./Theme";
 import { RecoilRoot } from "recoil";
+import { QueryClient, QueryClientProvider } from "react-query";
 import { createGlobalStyle } from "styled-components";
+
 const GlobalStyle = createGlobalStyle`
-@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400&display=swap');
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -20,60 +22,66 @@ article, aside, canvas, details, embed,
 figure, figcaption, footer, header, hgroup,
 main, menu, nav, output, ruby, section, summary,
 time, mark, audio, video {
-	margin: 0;
-	padding: 0;
-	border: 0;
-	font-size: 100%;
-	font: inherit;
-	vertical-align: baseline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
 }
 /* HTML5 display-role reset for older browsers */
 article, aside, details, figcaption, figure,
 footer, header, hgroup, main, menu, nav, section {
-	display: block;
+  display: block;
 }
 /* HTML5 hidden-attribute fix for newer browsers */
 *[hidden] {
     display: none;
 }
-body{
-	font-weight: 300;
-  font-family: 'Nanum Gothic', sans-serif;
-  color: black;
-  box-sizing: border-box;
-  line-height: 1.2;
+body {
+  line-height: 1;
 }
 menu, ol, ul {
-	list-style: none;
+  list-style: none;
 }
 blockquote, q {
-	quotes: none;
+  quotes: none;
 }
 blockquote:before, blockquote:after,
 q:before, q:after {
-	content: '';
-	content: none;
+  content: '';
+  content: none;
 }
 table {
-	border-collapse: collapse;
-	border-spacing: 0;
+  border-collapse: collapse;
+  border-spacing: 0;
 }
-
-li{
-list-style: none;
+* {
+  box-sizing: border-box;
 }
-a{
-text-decoration: none;
-color:inherit;
+body {
+  font-weight: 300;
+  font-family: 'Source Sans Pro', sans-serif;
+  color:black;
+  line-height: 1.2;
+  color: ${(props) => props.theme.white.darker};
+  background-color: black;
+}
+a {
+  text-decoration:none;
+  color:inherit;
 }
 `;
+const client = new QueryClient();
 ReactDOM.render(
   <React.StrictMode>
     <RecoilRoot>
-      <ThemeProvider theme={darkTheme}>
-        <GlobalStyle />
-        <App />
-      </ThemeProvider>
+      <QueryClientProvider client={client}>
+        <ThemeProvider theme={theme}>
+          <GlobalStyle />
+          <App />
+        </ThemeProvider>
+      </QueryClientProvider>
     </RecoilRoot>
   </React.StrictMode>,
   document.getElementById("root")
