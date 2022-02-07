@@ -1,11 +1,11 @@
-import { AnimatePresence, useViewportScroll } from "framer-motion";
-import { stringify } from "querystring";
 import React from "react";
+import { likesState } from "../atoms";
+import { useRecoilValue } from "recoil";
+import { Wrapper } from "./Search";
+import { getMovieDetail, IMovieDetail } from "../api";
 import { useQuery } from "react-query";
+import { AnimatePresence, useViewportScroll } from "framer-motion";
 import { useHistory, useLocation, useRouteMatch } from "react-router-dom";
-import styled from "styled-components";
-import { getSearchMulti, ISearch } from "../api";
-import MovieDetail from "../Components/MovieDetail";
 import {
   Box,
   boxVarients,
@@ -21,35 +21,24 @@ import {
   ModalTitle,
   Overlay,
 } from "./Home";
-export const Wrapper = styled.div`
-  display: grid;
-  gap: 5px;
-  grid-template-columns: repeat(5, 1fr);
-  position: absolute;
-  width: 90%;
-  left: 0;
-  right: 0;
-  top: 100px;
-  margin: 10px auto;
-`;
-function Search() {
+import MovieDetail from "../Components/MovieDetail";
+
+function Likes() {
+  const likes = useRecoilValue(likesState);
+  const { data } = useQuery<IMovieDetail>(["likes"], () =>
+    getMovieDetail(likes[0].type, likes[0].id)
+  );
+  const contents = data ? [data] : [];
   const { scrollY } = useViewportScroll();
   const location = useLocation();
   const history = useHistory();
-  const keyword = new URLSearchParams(location.search).get("keyword");
   const detailMatch =
-    useRouteMatch<{ type: string; id: string }>("/search/:type/:id");
-  const { data } = useQuery<ISearch>(["search"], () =>
-    getSearchMulti("" + keyword)
-  );
-
-  const contents =
-    data?.results.filter((data) => data.media_type !== "person") || [];
+    useRouteMatch<{ type: string; id: string }>("/likes/:type/:id");
   const boxClick = (type: string, movieId: number) => {
     if (type === "tv") {
-      history.push(`/search/${type}/${movieId}`);
+      history.push(`/likes/${type}/${movieId}`);
     } else {
-      history.push(`/search/${type}/${movieId}`);
+      history.push(`/likes/${type}/${movieId}`);
     }
   };
   const overlayClick = () => {
@@ -64,7 +53,7 @@ function Search() {
       <>
         {contents.map((movie) => (
           <Box
-            onClick={() => boxClick(movie.media_type, movie.id)}
+            onClick={() => boxClick("movie", movie.id)}
             layoutId={"" + movie.id}
             variants={boxVarients}
             initial="initial"
@@ -101,11 +90,8 @@ function Search() {
                     />
                     <ModalInfo>
                       <ModalTitle>{clickedContent.title}</ModalTitle>
-                      <MovieDetail
-                        content={clickedContent.media_type}
-                        id={clickedContent.id}
-                      />
-                      <ModalOverview>{clickedContent.overview}</ModalOverview>
+                      <MovieDetail content={"movie"} id={clickedContent.id} />
+                      <ModalOverview>{"ddd"}</ModalOverview>
                     </ModalInfo>
                   </>
                 ) : null}
@@ -118,4 +104,4 @@ function Search() {
   );
 }
 
-export default Search;
+export default Likes;

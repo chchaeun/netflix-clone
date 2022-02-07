@@ -4,17 +4,19 @@ import {
   MotionValue,
   useViewportScroll,
 } from "framer-motion";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "react-query";
 import { useHistory, useRouteMatch } from "react-router-dom";
 import styled from "styled-components";
-import { getNowPlaying, INowPlaying } from "../api";
+import { getMovies, IMovieDetail, IMoviesResult } from "../api";
+import MovieDetail from "../Components/MovieDetail";
+import MovieSlider from "../Components/MovieSlider";
 import { makeImageUrl } from "../utils";
-const Wrapper = styled.div`
+export const Wrapper = styled.div`
   width: 100%;
   padding-bottom: 200px;
 `;
-const Banner = styled.div<{ bgphoto: string }>`
+export const Banner = styled.div<{ bgphoto: string }>`
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -24,56 +26,16 @@ const Banner = styled.div<{ bgphoto: string }>`
     url(${(props) => props.bgphoto});
   background-size: cover;
 `;
-const Title = styled.h1`
+export const Title = styled.h1`
   font-size: 2.8rem;
   margin-bottom: 20px;
 `;
-const Overview = styled.p`
+export const Overview = styled.p`
   font-size: 1.2rem;
   width: 50%;
 `;
 
-const Slider = styled.div`
-  position: relative;
-  top: -50px;
-  width: 95vw;
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-`;
-const Row = styled(motion.div)`
-  display: grid;
-  gap: 5px;
-  grid-template-columns: repeat(6, 1fr);
-  position: absolute;
-  width: 100%;
-`;
-const Box = styled(motion.div)<{ bgphoto: string }>`
-  background-image: url(${(props) => props.bgphoto});
-  background-size: cover;
-  background-position: center center;
-  height: 140px;
-  &:first-child {
-    transform-origin: center left;
-  }
-  &:last-child {
-    transform-origin: center right;
-  }
-`;
-
-const Info = styled(motion.div)`
-  position: absolute;
-  width: 100%;
-  background-color: ${(props) => props.theme.black.lighter};
-  color: ${(props) => props.theme.white.lighter}
-  font-size: 16px;
-  padding: 8px;
-  bottom:0;
-  opacity:0;
-  text-align: center;
-`;
-
-const Overlay = styled(motion.div)`
+export const Overlay = styled(motion.div)`
   top: 0;
   left: 0;
   width: 100vw;
@@ -81,11 +43,12 @@ const Overlay = styled(motion.div)`
   position: fixed;
   background-color: rgba(0, 0, 0, 0.5);
   opacity: 0;
+  z-index: 15;
 `;
-const Modal = styled(motion.div)`
+export const Modal = styled(motion.div)`
   position: absolute;
   width: 40vw;
-  height: max-content;
+  height: fit-content;
   left: 0;
   right: 0;
   bottom: 0;
@@ -94,8 +57,9 @@ const Modal = styled(motion.div)`
   box-shadow: 1px 2px 20px 1px rgba(0, 0, 0, 0.2);
   border-radius: 10px;
   overflow: hidden;
+  z-index: 20;
 `;
-const ModalBackground = styled(motion.div)<{ bgphoto: string }>`
+export const ModalBackground = styled(motion.div)<{ bgphoto: string }>`
   background-image: linear-gradient(
       to top,
       ${(props) => props.theme.black.darker},
@@ -107,85 +71,60 @@ const ModalBackground = styled(motion.div)<{ bgphoto: string }>`
   background-size: cover;
   background-position: center center;
 `;
-const ModalInfo = styled.div`
+export const ModalInfo = styled.div`
   position: relative;
   top: -100px;
   margin: 20px;
 `;
-const ModalTitle = styled.h2`
+export const ModalTitle = styled.h2`
   font-size: 3em;
 `;
-const ModalOverview = styled.p`
+export const ModalShorts = styled.div``;
+export const ModalOverview = styled.p`
   padding: 10px 3px;
 `;
-const rowVarients = {
-  initial: {
-    x: window.outerWidth + 5,
-  },
-  animate: {
-    x: 0,
-  },
-  exit: {
-    x: -window.outerWidth - 5,
-  },
-};
-
-const boxVarients = {
-  initial: {
-    scale: 1,
-  },
-  hover: {
-    scale: 1.3,
-    y: -30,
-    transition: {
-      type: "tween",
-      duration: 0.3,
-      delay: 0.5,
-    },
-  },
-};
-
-const infoVarients = {
-  hover: {
-    opacity: 1,
-    transition: {
-      type: "tween",
-      duration: 0.3,
-      delay: 0.5,
-    },
-  },
-};
-const offset = 6;
 
 function Home() {
   const history = useHistory();
-  const movieMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId");
-  const [index, setIndex] = useState(0);
-  const [leaving, setLeaving] = useState(false);
+
   const { scrollY } = useViewportScroll();
-  const { data, isLoading } = useQuery<INowPlaying>(
+  const movieMatch = useRouteMatch<{ category: string; movieId: string }>(
+    "/movies/:category/:movieId"
+  );
+
+  const { data: nowPlayingData, isLoading } = useQuery<IMoviesResult>(
     ["movies", "nowPlaying"],
-    getNowPlaying
+    () => getMovies("now_playing")
+  );
+  const { data: popularData } = useQuery<IMoviesResult>(
+    ["movies", "popular"],
+    () => getMovies("popular")
+  );
+  const { data: topRatedData } = useQuery<IMoviesResult>(
+    ["movies", "topRated"],
+    () => getMovies("top_rated")
+  );
+  const movieData = nowPlayingData?.results.concat(
+    popularData?.results || [],
+    topRatedData?.results || []
   );
   const clickedMovie =
     movieMatch &&
-    data?.results.find((movie) => movie.id === +movieMatch.params.movieId);
+    movieData?.find((movie) => movie.id === +movieMatch.params.movieId);
 
-  const toggleLeaving = () => {
-    setLeaving((prev) => !prev);
-  };
-  const increaseIndex = () => {
-    if (data) {
-      if (leaving) return;
-      toggleLeaving();
-      const maxIndex = Math.floor((data.results.length - 1) / offset) - 1;
-      setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
-      console.log(maxIndex, index);
-    }
-  };
-  const boxClick = (movieId: number) => {
-    history.push(`/movies/${movieId}`);
-  };
+  const movieSliders =
+    nowPlayingData && popularData && topRatedData
+      ? [
+          {
+            title: "Now Playing",
+            category: "now_playing",
+            data: nowPlayingData,
+          },
+          { title: "Popular", category: "popular", data: popularData },
+          { title: "Top Rated", category: "top_rated", data: topRatedData },
+        ]
+      : [];
+
   const overlayClick = () => {
     history.push("/");
   };
@@ -194,42 +133,21 @@ function Home() {
       {isLoading ? null : (
         <>
           <Banner
-            onClick={increaseIndex}
-            bgphoto={makeImageUrl(data?.results[0].backdrop_path || "")}
+            bgphoto={makeImageUrl(
+              nowPlayingData?.results[0].backdrop_path || ""
+            )}
           >
-            <Title>{data?.results[0].title}</Title>
-            <Overview>{data?.results[0].overview}</Overview>
+            <Title>{nowPlayingData?.results[0].title}</Title>
+            <Overview>{nowPlayingData?.results[0].overview}</Overview>
           </Banner>
-          <Slider>
-            <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
-              <Row
-                variants={rowVarients}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                key={index}
-                transition={{ type: "tween", duration: 1 }}
-              >
-                {data?.results
-                  .slice(1)
-                  .slice(offset * index, offset * (index + 1))
-                  .map((movie) => (
-                    <Box
-                      onClick={() => boxClick(movie.id)}
-                      layoutId={movie.id + ""}
-                      variants={boxVarients}
-                      initial="initial"
-                      whileHover="hover"
-                      transition={{ type: "tween" }}
-                      key={movie.id}
-                      bgphoto={makeImageUrl(movie.backdrop_path, "w500")}
-                    >
-                      <Info variants={infoVarients}>{movie.title}</Info>
-                    </Box>
-                  ))}
-              </Row>
-            </AnimatePresence>
-          </Slider>
+          {movieSliders.map((slider) => (
+            <MovieSlider
+              key={slider.category}
+              title={slider.title}
+              category={slider.category}
+              data={slider.data}
+            />
+          ))}
           <AnimatePresence>
             {movieMatch ? (
               <>
@@ -240,7 +158,9 @@ function Home() {
                 />
                 <Modal
                   style={{ top: scrollY.get() + 50 }}
-                  layoutId={movieMatch.params.movieId}
+                  layoutId={
+                    movieMatch.params.category + movieMatch.params.movieId
+                  }
                 >
                   {clickedMovie ? (
                     <>
@@ -252,6 +172,7 @@ function Home() {
                       />
                       <ModalInfo>
                         <ModalTitle>{clickedMovie.title}</ModalTitle>
+                        <MovieDetail content="movie" id={clickedMovie.id} />
                         <ModalOverview>{clickedMovie.overview}</ModalOverview>
                       </ModalInfo>
                     </>
@@ -266,4 +187,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default React.memo(Home);
