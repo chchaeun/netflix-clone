@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "react-query";
 import styled from "styled-components";
-import { useSetRecoilState } from "recoil";
+import { useRecoilState } from "recoil";
 import { ILikes, likesState } from "../atoms";
 import {
   getMovieCast,
@@ -10,7 +10,8 @@ import {
   IMovieCast,
   IMovieDetail,
 } from "../api";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useHistory } from "react-router-dom";
 
 const Detail = styled.div`
   margin: 10px 5px;
@@ -40,8 +41,15 @@ interface IDetail {
 }
 
 function MovieDetail({ content, id }: IDetail) {
-  const setLikes = useSetRecoilState(likesState);
-
+  const history = useHistory();
+  const [likes, setLikes] = useRecoilState(likesState);
+  const [like, setLike] = useState(false);
+  useEffect(() => {
+    const likeIds = likes.map((like) => like.id);
+    if (likeIds.includes(id + "")) {
+      setLike(true);
+    }
+  }, []);
   const { data: movieDetail } = useQuery<IMovieDetail>(
     ["movieDetail", id],
     () => getMovieDetail(content, "" + id)
@@ -59,14 +67,26 @@ function MovieDetail({ content, id }: IDetail) {
       : getYear(movieDetail?.first_air_date + "") +
         "-" +
         getYear(movieDetail?.last_air_date + "");
+
+  const average = (arr: any) =>
+    Math.floor(arr.reduce((p: number, c: number) => p + c, 0) / arr.length);
   const runtime =
     content === "movie"
       ? movieDetail?.runtime
+      : typeof movieDetail?.episode_run_time === "object"
+      ? "About " + average(movieDetail.episode_run_time)
       : "About " + movieDetail?.episode_run_time;
-  const likeClick = (content: string, id: string) => {
-    setLikes((prev) => {
-      return [...prev, { type: content, id: id }];
-    });
+  const likeClick = (like: boolean, content: string, id: string) => {
+    if (like) {
+      setLikes((prev) => {
+        return [...prev.filter((p) => p.id !== id)];
+      });
+    } else {
+      setLikes((prev) => {
+        return [...prev, { type: content, id: id }];
+      });
+    }
+    setLike((prev) => !prev);
   };
   return (
     <>
@@ -79,9 +99,27 @@ function MovieDetail({ content, id }: IDetail) {
               borderRadius: "5px",
               cursor: "pointer",
             }}
-            onClick={() => likeClick(content, "" + id)}
+            onClick={() => likeClick(like, content, "" + id)}
           >
-            Like
+            <AnimatePresence>
+              {like ? (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  UnLike
+                </motion.span>
+              ) : (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  Like
+                </motion.span>
+              )}
+            </AnimatePresence>
           </Keyword>
           <Keyword style={{ backgroundColor: "#d32222", borderRadius: "5px" }}>
             {date}
