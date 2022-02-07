@@ -7,7 +7,7 @@ import Search from "./Routes/Search";
 import Tv from "./Routes/Tv";
 function App() {
   return (
-    <Router basename={process.env.PUBLIC_URL}>
+    <Router basename="/netflix-clone">
       <Header />
       <Switch>
         <Route path={["/tv", "/tv/:category/:tvId"]}>
