@@ -11,6 +11,7 @@
 
 - Typescript
 - React Query
+- Framer Motion
 - React-hook-form
 - Styled Components
 - Recoil
